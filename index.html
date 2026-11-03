@@ -1,0 +1,519 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WATER FLOW</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #eff7fc;
+    color: #17324d;
+}
+
+header {
+    background: #075985;
+    color: white;
+    padding: 25px;
+    text-align: center;
+}
+
+header h1 {
+    margin: 0;
+    letter-spacing: 2px;
+}
+
+header p {
+    color: #d7efff;
+    margin-bottom: 0;
+}
+
+main {
+    max-width: 1000px;
+    margin: auto;
+    padding: 22px;
+}
+
+.heading {
+    margin-bottom: 20px;
+}
+
+.heading h2 {
+    margin-bottom: 5px;
+}
+
+.heading p {
+    color: #647d91;
+}
+
+.status {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.card {
+    background: white;
+    padding: 22px;
+    border-radius: 15px;
+    box-shadow: 0 3px 12px #0000000b;
+}
+
+.card h3 {
+    color: #648095;
+    font-size: 15px;
+}
+
+.value {
+    color: #0284c7;
+    font-size: 30px;
+    font-weight: bold;
+}
+
+.chart {
+    margin-top: 20px;
+    background: white;
+    padding: 22px;
+    border-radius: 15px;
+}
+
+canvas {
+    width: 100%;
+    height: 220px;
+}
+
+footer {
+    text-align: center;
+    padding: 25px;
+    color: #648095;
+}
+
+@media (max-width: 550px) {
+    .cards {
+        grid-template-columns: 1fr;
+    }
+
+    header h1 {
+        font-size: 24px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>WATER FLOW</h1>
+    <p>Water Flow Monitoring System</p>
+</header>
+
+<main>
+
+    <div class="heading">
+        <h2>Dashboard Monitoring</h2>
+        <p>Pemantauan aliran dan debit air</p>
+    </div>
+
+    <div class="status">
+        <strong>Status ESP32:</strong>
+        <span id="status">Menunggu koneksi</span>
+    </div>
+
+    <div class="cards">
+
+        <div class="card">
+            <h3>DEBIT AIR SAAT INI</h3>
+            <div class="value">
+                <span id="flow">--</span>
+                <small>L/menit</small>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>KECEPATAN ALIRAN</h3>
+            <div class="value">
+                <span id="speed">--</span>
+                <small>m/s</small>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>TOTAL VOLUME AIR</h3>
+            <div class="value">
+                <span id="volume">--</span>
+                <small>Liter</small>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>KONDISI ALIRAN</h3>
+            <div class="value" id="condition">
+                Menunggu
+            </div>
+        </div>
+
+    </div>
+
+    <div class="chart">
+        <h3>Grafik Pemantauan Debit Air</h3>
+        <canvas id="chart"></canvas>
+        <p>Grafik akan muncul setelah data diterima.</p>
+    </div>
+
+</main>
+
+<footer>
+    WATER FLOW © 2026
+    <p>Water Flow Monitoring System</p>
+</footer>
+
+<script>
+const history = [];
+
+function updateFromESP32(data) {
+
+    document.getElementById("status").textContent =
+        "Terhubung";
+
+    document.getElementById("flow").textContent =
+        Number(data.flow).toFixed(2);
+
+    document.getElementById("speed").textContent =
+        Number(data.speed).toFixed(2);
+
+    document.getElementById("volume").textContent =
+        Number(data.volume).toFixed(2);
+
+    document.getElementById("condition").textContent =
+        data.flow > 0 ? "Mengalir" : "Tidak mengalir";
+
+    history.push(Number(data.flow));
+
+    if (history.length > 20) {
+        history.shift();
+    }
+
+    drawChart();
+}
+
+function drawChart() {
+
+    const canvas = document.getElementById("chart");
+    const ctx = canvas.getContext("2d");
+
+    const width = canvas.clientWidth;
+    const height = 220;
+    const ratio = window.devicePixelRatio || 1;
+
+    canvas.width = width * ratio;
+    canvas.height = height * ratio;
+
+    ctx.scale(ratio, ratio);
+    ctx.clearRect(0, 0, width, height);
+
+    if (history.length < 1) return;
+
+    const max = Math.max(...history, 1);
+
+    ctx.beginPath();
+    ctx.strokeStyle = "#0284c7";
+    ctx.lineWidth = 3;
+
+    history.forEach((value, index) => {
+
+        const x = history.length === 1
+            ? width / 2
+            : index * width / (history.length - 1);
+
+        const y = height - 15 - (value / max) * 180;
+
+        if (index === 0) {
+            ctx.moveTo(x, y);
+        } else {
+            ctx.lineTo(x, y);
+        }
+    });
+
+    ctx.stroke();
+}
+
+// Fungsi ini akan menerima data ESP32
+// setelah sistem komunikasi selesai dibuat.
+
+</script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WATER FLOW</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #eff7fc;
+    color: #17324d;
+}
+
+header {
+    background: #075985;
+    color: white;
+    padding: 25px;
+    text-align: center;
+}
+
+header h1 {
+    margin: 0;
+    letter-spacing: 2px;
+}
+
+header p {
+    color: #d7efff;
+    margin-bottom: 0;
+}
+
+main {
+    max-width: 1000px;
+    margin: auto;
+    padding: 22px;
+}
+
+.heading {
+    margin-bottom: 20px;
+}
+
+.heading h2 {
+    margin-bottom: 5px;
+}
+
+.heading p {
+    color: #647d91;
+}
+
+.status {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.card {
+    background: white;
+    padding: 22px;
+    border-radius: 15px;
+    box-shadow: 0 3px 12px #0000000b;
+}
+
+.card h3 {
+    color: #648095;
+    font-size: 15px;
+}
+
+.value {
+    color: #0284c7;
+    font-size: 30px;
+    font-weight: bold;
+}
+
+.chart {
+    margin-top: 20px;
+    background: white;
+    padding: 22px;
+    border-radius: 15px;
+}
+
+canvas {
+    width: 100%;
+    height: 220px;
+}
+
+footer {
+    text-align: center;
+    padding: 25px;
+    color: #648095;
+}
+
+@media (max-width: 550px) {
+    .cards {
+        grid-template-columns: 1fr;
+    }
+
+    header h1 {
+        font-size: 24px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>WATER FLOW</h1>
+    <p>Water Flow Monitoring System</p>
+</header>
+
+<main>
+
+    <div class="heading">
+        <h2>Dashboard Monitoring</h2>
+        <p>Pemantauan aliran dan debit air</p>
+    </div>
+
+    <div class="status">
+        <strong>Status ESP32:</strong>
+        <span id="status">Menunggu koneksi</span>
+    </div>
+
+    <div class="cards">
+
+        <div class="card">
+            <h3>DEBIT AIR SAAT INI</h3>
+            <div class="value">
+                <span id="flow">--</span>
+                <small>L/menit</small>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>KECEPATAN ALIRAN</h3>
+            <div class="value">
+                <span id="speed">--</span>
+                <small>m/s</small>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>TOTAL VOLUME AIR</h3>
+            <div class="value">
+                <span id="volume">--</span>
+                <small>Liter</small>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>KONDISI ALIRAN</h3>
+            <div class="value" id="condition">
+                Menunggu
+            </div>
+        </div>
+
+    </div>
+
+    <div class="chart">
+        <h3>Grafik Pemantauan Debit Air</h3>
+        <canvas id="chart"></canvas>
+        <p>Grafik akan muncul setelah data diterima.</p>
+    </div>
+
+</main>
+
+<footer>
+    WATER FLOW © 2026
+    <p>Water Flow Monitoring System</p>
+</footer>
+
+<script>
+const history = [];
+
+function updateFromESP32(data) {
+
+    document.getElementById("status").textContent =
+        "Terhubung";
+
+    document.getElementById("flow").textContent =
+        Number(data.flow).toFixed(2);
+
+    document.getElementById("speed").textContent =
+        Number(data.speed).toFixed(2);
+
+    document.getElementById("volume").textContent =
+        Number(data.volume).toFixed(2);
+
+    document.getElementById("condition").textContent =
+        data.flow > 0 ? "Mengalir" : "Tidak mengalir";
+
+    history.push(Number(data.flow));
+
+    if (history.length > 20) {
+        history.shift();
+    }
+
+    drawChart();
+}
+
+function drawChart() {
+
+    const canvas = document.getElementById("chart");
+    const ctx = canvas.getContext("2d");
+
+    const width = canvas.clientWidth;
+    const height = 220;
+    const ratio = window.devicePixelRatio || 1;
+
+    canvas.width = width * ratio;
+    canvas.height = height * ratio;
+
+    ctx.scale(ratio, ratio);
+    ctx.clearRect(0, 0, width, height);
+
+    if (history.length < 1) return;
+
+    const max = Math.max(...history, 1);
+
+    ctx.beginPath();
+    ctx.strokeStyle = "#0284c7";
+    ctx.lineWidth = 3;
+
+    history.forEach((value, index) => {
+
+        const x = history.length === 1
+            ? width / 2
+            : index * width / (history.length - 1);
+
+        const y = height - 15 - (value / max) * 180;
+
+        if (index === 0) {
+            ctx.moveTo(x, y);
+        } else {
+            ctx.lineTo(x, y);
+        }
+    });
+
+    ctx.stroke();
+}
+
+// Fungsi ini akan menerima data ESP32
+// setelah sistem komunikasi selesai dibuat.
+
+</script>
+
+</body>
+</html>
